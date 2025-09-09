@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pelagos Restaurant - AI Voice Assistant Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1034A6 0%, #0F2B5B 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 600px;
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        /* Language Switcher Styles */
+        .language-switcher {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+
+        .language-btn {
+            background: linear-gradient(135deg, #1034A6 0%, #0F2B5B 100%);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 52, 166, 0.3);
+        }
+
+        .language-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 52, 166, 0.4);
+        }
+
+        .language-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            min-width: 150px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .language-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(5px);
+        }
+
+        .language-option {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .language-option:hover {
+            background: #f8f9fa;
+        }
+
+        .language-option.active {
+            background: #e3f2fd;
+            color: #1034A6;
+            font-weight: 500;
+        }
+
+        .logo {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #1034A6;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+            transition: all 0.3s ease;
+        }
+
+        .main-text {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 40px;
+            transition: all 0.3s ease;
+        }
+
+        .demo-box {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .demo-title {
+            font-size: 1.3rem;
+            color: #1034A6;
+            margin-bottom: 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .demo-examples {
+            text-align: left;
+            color: #555;
+            line-height: 1.8;
+        }
+
+        .demo-examples li {
+            margin-bottom: 8px;
+            list-style: none;
+            position: relative;
+            padding-left: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .demo-examples li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #1034A6;
+            font-weight: bold;
+        }
+
+        .footer-note {
+            color: #888;
+            font-size: 0.95rem;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        /* Fix for widget modal positioning */
+        .autocalls-widget-modal {
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+        }
+
+        /* Ensure widget is not clipped */
+        body {
+            overflow: visible !important;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 25px;
+                margin: 10px;
+            }
+            
+            .logo {
+                font-size: 2.2rem;
+            }
+            
+            .main-text {
+                font-size: 1.1rem;
+            }
+
+            .language-switcher {
+                top: 15px;
+                right: 15px;
+            }
+
+            .language-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+        }
+
+        /* Animation for content changes */
+        .fade-transition {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        .fade-transition.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher">
+            <button class="language-btn" onclick="toggleLanguageDropdown()">
+                <span id="current-flag">🇺🇸</span>
+                <span id="current-lang">English</span>
+                <span>▼</span>
+            </button>
+            <div class="language-dropdown" id="language-dropdown">
+                <div class="language-option active" onclick="switchLanguage('en')">
+                    <span>🇺🇸</span>
+                    <span>English</span>
+                </div>
+                <div class="language-option" onclick="switchLanguage('el')">
+                    <span>🇬🇷</span>
+                    <span>Ελληνικά</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="logo" id="logo">Pelagos</div>
+        <div class="subtitle" id="subtitle">Mediterranean Restaurant • Limassol</div>
+        
+        <div class="main-text" id="main-text">
+            Try our AI voice assistant for restaurant reservations in Greek, English, Russian or Hebrew. 
+            Have a natural conversation with Maria about availability, bookings, and restaurant information.
+        </div>
+
+        <div class="demo-box">
+            <div class="demo-title" id="demo-title">Try saying:</div>
+            <ul class="demo-examples" id="demo-examples">
+                <li>"Do you have a table available tomorrow at 8 PM?"</li>
+                <li>"I'd like to make a reservation for 4 people"</li>
+                <li>"What are your operating hours?"</li>
+                <li>"Tell me about your wine list"</li>
+            </ul>
+        </div>
+
+        <div class="footer-note" id="footer-note">
+            Look for the voice assistant widget in the bottom-right corner to start testing
+        </div>
+    </div>
+
+    <!-- Autocalls Web Widget -->
+    <script src="https://app.autocalls.ai/embed.js" 
+            data-assistant-id="ecc9d0ee-481b-403e-aa49-7b7bf20e0954" 
+            data-position="right-bottom" 
+            data-color="#1034A6" 
+            data-header-title="Demo Restaurant" 
+            data-header-subtitle="Virtual restaurant just for testing ✨" 
+            data-button-main-text="Wanna Test Demo?" 
+            data-button-sub-text="Start voice call 📞" 
+            data-start-button-text="Start Web Voice Call" 
+            data-modal-title="Ready to test?" 
+            data-modal-description="Click below to start your voice call experience">
+    </script>
+
+    <script>
+        // Translations object
+        const translations = {
+            en: {
+                logo: "Pelagos",
+                subtitle: "Mediterranean Restaurant • Limassol",
+                mainText: "Try our AI voice assistant for restaurant reservations in Greek, English, Russian or Hebrew. Have a natural conversation with Maria about availability, bookings, and restaurant information.",
+                demoTitle: "Try saying:",
+                demoExamples: [
+                    '"Do you have a table available tomorrow at 8 PM?"',
+                    '"I\'d like to make a reservation for 4 people"',
+                    '"What are your operating hours?"',
+                    '"Tell me about your wine list"'
+                ],
+                footerNote: "Look for the voice assistant widget in the bottom-right corner to start testing",
+                currentLang: "English",
+                flag: "🇺🇸"
+            },
+            el: {
+                logo: "Πέλαγος",
+                subtitle: "Μεσογειακό Εστιατόριο • Λεμεσός",
+                mainText: "Δοκιμάστε τον AI φωνητικό βοηθό μας για κρατήσεις εστιατορίου στα ελληνικά, αγγλικά, ρωσικά ή εβραϊκά. Κάντε μια φυσική συνομιλία με τη Μαρία για διαθεσιμότητα, κρατήσεις και πληροφορίες εστιατορίου.",
+                demoTitle: "Δοκιμάστε να πείτε:",
+                demoExamples: [
+                    '"Έχετε διαθέσιμο τραπέζι αύριο στις 8 το βράδυ;"',
+                    '"Θα ήθελα να κάνω κράτηση για 4 άτομα"',
+                    '"Ποιες είναι οι ώρες λειτουργίας σας;"',
+                    '"Πείτε μου για τον κατάλογο κρασιών σας"'
+                ],
+                footerNote: "Αναζητήστε το widget του φωνητικού βοηθού στη δεξιά κάτω γωνία για να ξεκινήσετε τη δοκιμή",
+                currentLang: "Ελληνικά",
+                flag: "🇬🇷"
+            }
+        };
+
+        // Current language (default: English)
+        let currentLanguage = localStorage.getItem('pelagos-language') || 'en';
+
+        // Initialize language on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            switchLanguage(currentLanguage);
+        });
+
+        // Toggle language dropdown
+        function toggleLanguageDropdown() {
+            const dropdown = document.getElementById('language-dropdown');
+            dropdown.classList.toggle('show');
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('.language-switcher')) {
+                    dropdown.classList.remove('show');
+                }
+            });
+        }
+
+        // Switch language function
+        function switchLanguage(lang) {
+            currentLanguage = lang;
+            
+            // Save to localStorage
+            localStorage.setItem('pelagos-language', lang);
+            
+            // Update current language display
+            document.getElementById('current-flag').textContent = translations[lang].flag;
+            document.getElementById('current-lang').textContent = translations[lang].currentLang;
+            
+            // Update active state in dropdown
+            document.querySelectorAll('.language-option').forEach(option => {
+                option.classList.remove('active');
+            });
+            document.querySelector(`[onclick="switchLanguage('${lang}')"]`).classList.add('active');
+            
+            // Close dropdown
+            document.getElementById('language-dropdown').classList.remove('show');
+            
+            // Update content with smooth transition
+            updateContent(lang);
+        }
+
+        // Update page content
+        function updateContent(lang) {
+            const elements = [
+                { id: 'logo', key: 'logo' },
+                { id: 'subtitle', key: 'subtitle' },
+                { id: 'main-text', key: 'mainText' },
+                { id: 'demo-title', key: 'demoTitle' },
+                { id: 'footer-note', key: 'footerNote' }
+            ];
+
+            // Add fade transition
+            elements.forEach(element => {
+                const el = document.getElementById(element.id);
+                el.style.opacity = '0.5';
+                el.style.transform = 'translateY(5px)';
+                
+                setTimeout(() => {
+                    el.textContent = translations[lang][element.key];
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                }, 150);
+            });
+
+            // Update demo examples
+            const examplesList = document.getElementById('demo-examples');
+            examplesList.style.opacity = '0.5';
+            
+            setTimeout(() => {
+                examplesList.innerHTML = '';
+                translations[lang].demoExamples.forEach(example => {
+                    const li = document.createElement('li');
+                    li.textContent = example;
+                    examplesList.appendChild(li);
+                });
+                examplesList.style.opacity = '1';
+            }, 150);
+
+            // Update page title and lang attribute
+            document.title = `${translations[lang].logo} Restaurant - AI Voice Assistant Demo`;
+            document.documentElement.lang = lang;
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.language-switcher')) {
+                document.getElementById('language-dropdown').classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>
